@@ -24,24 +24,20 @@ module BullsAndCows
     end
     def welcome
       system "clear"
-      puts @colors.green("##########################################")
-      puts @colors.green("##  Welcome to the Bulls and Cows game! ##")
-      puts @colors.green("##########################################")
+      puts @colors.green("┌────────────────────────────────────────────┐")
+      puts @colors.green("│     Welcome to the Bulls and Cows game!    │")
+      puts @colors.green("└────────────────────────────────────────────┘")
     end
     def instructions
-      puts " "
-      puts "First you have to choose a four-letter word."
-      puts "The word to be guessed should not have repeating letters."
+      puts "Instructions:"
+      puts "Please choose a four-letter word with non repeating characters."
       puts "Only letters are allowed!"
-      puts " "
       puts "The computer then will guess the word."
-      puts " "
+      puts "\n"
       puts @colors.green("Would you like to play? (y/n)")
     end
     def word_display(msg)
-      puts @colors.yellow("--------------------------------")
       puts @colors.yellow("You have chosen the word: " + msg)
-      puts @colors.yellow("--------------------------------")
     end
     def quit_game
       puts @colors.green("Thank you, see you next time!")
@@ -49,18 +45,29 @@ module BullsAndCows
     def display_time(prefix = ">")
       puts prefix + @time.time
     end
-    def display_cows_bulls(input)
-      puts "cows  = " + @colors.yellow(input[1].to_s) + " - bulls = " + @colors.green(input[0].to_s)
-    end
-    def display_attempts(attempts,msg)
-      puts "****"
-      puts "Attempt no. " + attempts.to_s + " = " + @colors.yellow(msg)
-    end
     def display_victory
       puts @colors.green("Woohay!!!!!  We found it!!!")
+      display_time "Finished at: "
     end
     def display_error(msg)
       puts @colors.red(msg)
+    end
+    def display_board_header
+      puts ("┌─────────┬───────┬──────┬───────┬─────────┐")
+      puts ("│ Attempt │ Guess │ Cows │ Bulls | Possib. |")
+      puts ("├─────────┼───────┼──────┼───────┼─────────┤")
+    end
+    def display_board_row(attempts, guess, input, possibilities)
+      puts "│ " + attempts.to_s.ljust(7, ' ') + " │ " + guess.to_s.ljust(6, ' ') + "│ " + @colors.yellow(input[1].to_s.ljust(5, ' ')) + "│ " + @colors.green(input[0].to_s.ljust(6, ' ')) + "│ " + possibilities.to_s.ljust(8, ' ') + "│ "
+    end
+    def display_board_bottom
+      puts ("└─────────┴───────┴──────┴───────┴─────────┘")
+    end
+    def display_choose_word
+      puts "Choose your secret word now:"
+    end
+    def display_msg(msg)
+      puts msg
     end
   end #end class GameUI
 
@@ -89,7 +96,7 @@ module BullsAndCows
       elsif response == "n"
         quit_game
       else
-        puts "Input not valid, please choose y or n"
+        @ui.display_error "Input not valid, please choose y or n"
         choose_to_play
       end
     end
@@ -99,9 +106,7 @@ module BullsAndCows
     end
 
     def choose_word
-      puts " "
-      puts "Choose now a four-letter word, with non repeting letters:"
-
+      @ui.display_choose_word
       input = gets.chomp.downcase
       if choose_word_input_validation(input)
         @secret_word = input
@@ -150,14 +155,12 @@ module BullsAndCows
       secret_word = @secret_word.scan /\w/
       pegs = 4
       possibilities = all_possibilities(pegs)
-      puts "All possibilities = " + possibilities.length.to_s
+      @ui.display_msg "Total initial possibilities = " + possibilities.length.to_s
+      @ui.display_board_header
 
       loop do
         computer_guess = make_guess(possibilities)
         check = compare(secret_word, computer_guess)
-
-        @ui.display_attempts(@attempts,computer_guess.join.to_s)
-        @ui.display_cows_bulls(check)
 
         #1.First try to reduce the possibilities the most
         #1.1if no bulls or cows in the guess remove all combinations with the letters in the guess from the possibilities set
@@ -175,18 +178,16 @@ module BullsAndCows
             compare(computer_guess,s) == check
         end
 
-        puts "possibilities = " + possibilities.length.to_s
-        @ui.display_time
+        @ui.display_board_row(@attempts, computer_guess.join.to_s, check, possibilities.length.to_s)
 
         if have_a_match?(check)
+          @ui.display_board_bottom
           @ui.display_victory
           break
         end
 
         break if @attempts == 36
-      end
-
-      puts "** END **"
+      end #end loop
     end #def play_game
   end # class Game
 end #module BullsAndCows
