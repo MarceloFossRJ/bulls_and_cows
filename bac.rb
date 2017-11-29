@@ -71,9 +71,20 @@ module BullsAndCows
     end
   end #end class GameUI
 
+  class Matrix
+    def permutations(pegs)
+      [*'a'..'z'].permutation(pegs).map {|c| Array.new(c)}
+    end
+
+    def compare(reference, comparable)
+      bulls = comparable.zip(reference).find_all { |a, b| a==b }.count
+      cows = comparable.inject(0){|sum,e| (reference.include?(e)) ? sum += 1 : sum } - bulls
+      Array.new([bulls,cows])
+    end
+  end
+
   class Game
     def initialize
-      @attempts = 0
       @ui = GameUI.new
       @ui.welcome
       @ui.instructions
@@ -81,7 +92,8 @@ module BullsAndCows
       choose_word
       @ui.word_display(@secret_word)
       @ui.display_time("Started at: ")
-      play_game
+      compute = Compute.new(@secret_word)
+      compute.play
       @ui.quit_game
     end
 
@@ -131,15 +143,13 @@ module BullsAndCows
       end
       return true
     end
+  end #End class Game
 
-    def all_possibilities(pegs)
-      [*'a'..'z'].permutation(pegs).map {|c| Array.new(c)}
-    end
-
-    def compare(reference, comparable)
-      bulls = comparable.zip(reference).find_all { |a, b| a==b }.count
-      cows = comparable.inject(0){|sum,e| (reference.include?(e)) ? sum += 1 : sum } - bulls
-      Array.new([bulls,cows])
+  class Compute
+    def initialize(secret_word)
+      @attempts = 0
+      @secret_word = secret_word
+      @ui = GameUI.new
     end
 
     def make_guess(possibilities)
@@ -151,16 +161,17 @@ module BullsAndCows
       guess[0] == 4
     end
 
-    def play_game
+    def play
       secret_word = @secret_word.scan /\w/
       pegs = 4
-      possibilities = all_possibilities(pegs)
+      matrix = Matrix.new
+      possibilities = matrix.permutations(pegs)
       @ui.display_msg "Total initial possibilities = " + possibilities.length.to_s
       @ui.display_board_header
 
       loop do
         computer_guess = make_guess(possibilities)
-        check = compare(secret_word, computer_guess)
+        check = matrix.compare(secret_word, computer_guess)
 
         #1.First try to reduce the possibilities the most
         #1.1if no bulls or cows in the guess remove all combinations with the letters in the guess from the possibilities set
@@ -175,7 +186,7 @@ module BullsAndCows
         end
         #2. Apply inspired Knuth algorithm
         possibilities.select! do |s|
-            compare(computer_guess,s) == check
+          matrix.compare(computer_guess,s) == check
         end
 
         @ui.display_board_row(@attempts, computer_guess.join.to_s, check, possibilities.length.to_s)
@@ -186,7 +197,6 @@ module BullsAndCows
           break
         end
 
-        break if @attempts == 36
       end #end loop
     end #def play_game
   end # class Game
