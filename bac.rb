@@ -1,26 +1,33 @@
 module BullsAndCows
-  class Game
-    def initialize
-      @attempts = 0
-      welcome
-      instructions
-      choose_to_play
-      choose_word
-      puts yellow("--------------------------------")
-      puts yellow("You have chosen the word: " + @secret_word)
-      puts yellow("--------------------------------")
-      puts "Started at:" + Time.now().to_s
-      play_game
-      quit_game
+  class Timer
+    def time
+      t = Time.now
+      t.strftime("%H:%M:%S").to_s
+    end
+  end
+
+  class Colors
+    def colorize(text, color_code)
+      "\e[#{color_code}m#{text}\e[0m"
     end
 
+    def red(text); colorize(text, 31); end
+    def green(text); colorize(text, 32); end
+    def blue(text); colorize(text, 34); end
+    def yellow(text); colorize(text, 33); end
+  end
+
+  class GameUI
+    def initialize
+      @colors = Colors.new
+      @time = Timer.new
+    end
     def welcome
       system "clear"
-      puts green("##########################################")
-      puts green("##  Welcome to the Bulls and Cows game! ##")
-      puts green("##########################################")
+      puts @colors.green("##########################################")
+      puts @colors.green("##  Welcome to the Bulls and Cows game! ##")
+      puts @colors.green("##########################################")
     end
-
     def instructions
       puts " "
       puts "First you have to choose a four-letter word."
@@ -29,7 +36,46 @@ module BullsAndCows
       puts " "
       puts "The computer then will guess the word."
       puts " "
-      puts green("Would you like to play? (y/n)")
+      puts @colors.green("Would you like to play? (y/n)")
+    end
+    def word_display(msg)
+      puts @colors.yellow("--------------------------------")
+      puts @colors.yellow("You have chosen the word: " + msg)
+      puts @colors.yellow("--------------------------------")
+    end
+    def quit_game
+      puts @colors.green("Thank you, see you next time!")
+    end
+    def display_time(prefix = ">")
+      puts prefix + @time.time
+    end
+    def display_cows_bulls(input)
+      puts "cows  = " + @colors.yellow(input[1].to_s) + " - bulls = " + @colors.green(input[0].to_s)
+    end
+    def display_attempts(attempts,msg)
+      puts "****"
+      puts "Attempt no. " + attempts.to_s + " = " + @colors.yellow(msg)
+    end
+    def display_victory
+      puts @colors.green("Woohay!!!!!  We found it!!!")
+    end
+    def display_error(msg)
+      puts @colors.red(msg)
+    end
+  end #end class GameUI
+
+  class Game
+    def initialize
+      @attempts = 0
+      @ui = GameUI.new
+      @ui.welcome
+      @ui.instructions
+      choose_to_play
+      choose_word
+      @ui.word_display(@secret_word)
+      @ui.display_time("Started at: ")
+      play_game
+      @ui.quit_game
     end
 
     def choose_to_play
@@ -49,7 +95,7 @@ module BullsAndCows
     end
 
     def quit_game
-      puts "Thank you, see you next time!"
+      @ui.quit_game
     end
 
     def choose_word
@@ -67,31 +113,18 @@ module BullsAndCows
 
     def choose_word_input_validation(response)
       if response.length != 4
-        puts red("Invalid input: wrong length.")
+        @ui.display_error("Invalid input: wrong length.")
         return false
       end
       if !response.match(/^[[:alpha:]]+$/)
-        puts red("Invalid input: only letters accepted.")
+        @ui.display_error("Invalid input: only letters accepted.")
         return false
       end
       if !(response !~ /([a-z]).*\1/)
-        puts red("Invalid input: letters cannot be reapeted.")
+        @ui.display_error("Invalid input: letters cannot be reapeted.")
         return false
       end
       return true
-    end
-
-    def colorize(text, color_code)
-      "\e[#{color_code}m#{text}\e[0m"
-    end
-
-    def red(text); colorize(text, 31); end
-    def green(text); colorize(text, 32); end
-    def blue(text); colorize(text, 34); end
-    def yellow(text); colorize(text, 33); end
-
-    def print_cows_bulls(input)
-      puts "cows  = " + yellow(input[1].to_s) + " - bulls = " + green(input[0].to_s)
     end
 
     def all_possibilities(pegs)
@@ -123,9 +156,8 @@ module BullsAndCows
         computer_guess = make_guess(possibilities)
         check = compare(secret_word, computer_guess)
 
-        puts "****"
-        puts "Attempt no. " + @attempts.to_s + " = " + yellow(computer_guess.join.to_s)
-        print_cows_bulls(check)
+        @ui.display_attempts(@attempts,computer_guess.join.to_s)
+        @ui.display_cows_bulls(check)
 
         #1.First try to reduce the possibilities the most
         #1.1if no bulls or cows in the guess remove all combinations with the letters in the guess from the possibilities set
@@ -144,10 +176,10 @@ module BullsAndCows
         end
 
         puts "possibilities = " + possibilities.length.to_s
-        puts "Time: " + Time.now().to_s
+        @ui.display_time
 
         if have_a_match?(check)
-          puts green("Woohay!!!!!  We found it!!!")
+          @ui.display_victory
           break
         end
 
