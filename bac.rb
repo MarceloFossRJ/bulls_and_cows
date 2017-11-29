@@ -127,22 +127,22 @@ module BullsAndCows
         puts "Attempt no. " + @attempts.to_s + " = " + yellow(computer_guess.join.to_s)
         print_cows_bulls(check)
 
-        #if no bulls or cows in the guess remove all combinations with the letters in the guess from the possibilities set
+        #1.First try to reduce the possibilities the most
+        #1.1if no bulls or cows in the guess remove all combinations with the letters in the guess from the possibilities set
         if check[1] == 0 && check[0] == 0
           computer_guess.map{ |j| possibilities.delete_if{|x| x.include? j} }
         end
+        #1.2there is a bull or cow in the guess, we should remove from the possibilities the combinations that does not have any of those words
         n2 = Array.new
         if check[1] > 0 || check[0] > 0
           n2 = computer_guess.inject([]){|a,b| a += possibilities.select{|x| x.include? b } }
           possibilities = n2.uniq
         end
-        #knuth inspired algorithm
-        possibilities.each do |q|
-          m = compare(computer_guess,q)
-          if m != check
-            possibilities.delete_at(possibilities.index(q))
-          end
+        #2. Apply inspired Knuth algorithm
+        possibilities.select! do |s|
+            compare(computer_guess,s) == check
         end
+
         puts "possibilities = " + possibilities.length.to_s
         puts "Time: " + Time.now().to_s
 
