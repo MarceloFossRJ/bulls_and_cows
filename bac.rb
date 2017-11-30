@@ -1,3 +1,4 @@
+require 'io/console'
 module BullsAndCows
   class Timer
     def time
@@ -161,14 +162,6 @@ module BullsAndCows
       return true
     end
 
-    def validate_check_input(input)
-      if !((0..4) === input)
-        @ui.display_error "Invalid Input: Choose between 0 and 4"
-        return false
-      end
-      return true
-    end
-
     def input_bulls_and_cows
       check = Array.new
       @ui.display_msg "How many bulls I got?"
@@ -186,11 +179,14 @@ module BullsAndCows
 
     def human_play
       possibilities = @matrix.permutations(PEGS)
-      @ui.display_msg "Total initial possibilities = " + possibilities.length.to_s
+
+      @ui.display_msg "Think on you secret word, and press any key to start."
+      STDIN.getch
+      print "            \r"
 
       loop do
         computer_guess = make_guess(possibilities)
-        @ui.display_msg "My guess no." + @attempts.to_s + " is: " + computer_guess.join.to_s
+        @ui.display_msg "My guess no." + @attempts.to_s + " is: " + computer_guess.join.to_s.upcase
 
         check = input_bulls_and_cows
 
