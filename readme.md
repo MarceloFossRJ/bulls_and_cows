@@ -32,6 +32,8 @@ There are two gameplay options:
 1. The game algorithm guesses the word, while the Chooser (human) gives the cows and bulls score for each guess using command line.
 2. the Chooser (human) selects a word and the game algorithm does the rest of the job automatically.
 
+The game works with any language that uses the ISO basic latin alphabet letters (i.e. english, portuguese, italian, french, german, etc), without special letters (ç, á, ä, à, â, ã, ß, etc).
+
 ## Installation instructions
 Clone the repository on your computer.  
 To run it type ``` $ ruby bac.rb ``` at command prompt, and follow the on screen instructions.
