@@ -34,7 +34,12 @@ module BullsAndCows
       puts "Only letters are allowed!"
       puts "The computer then will guess the word."
       puts "\n"
-      puts @colors.green("Would you like to play? (y/n)")
+    end
+    def choose_display
+      puts @colors.green("Please choose one option:")
+      puts @colors.green("1. Would you like to play yourself?")
+      puts @colors.green("2. Would you like the computer play for you?")
+      puts @colors.green("3. Would you like to quit?")
     end
     def word_display(msg)
       puts @colors.yellow("You have chosen the word: " + msg)
@@ -88,12 +93,12 @@ module BullsAndCows
       @ui = GameUI.new
       @ui.welcome
       @ui.instructions
+      @ui.choose_display
       choose_to_play
-      choose_word
-      @ui.word_display(@secret_word)
-      @ui.display_time("Started at: ")
+      choose_word if !@human_play
       compute = Compute.new(@secret_word)
-      compute.play
+      #compute.play
+      @human_play ? compute.human_play : compute.computer_play
       @ui.quit_game
     end
 
@@ -103,9 +108,11 @@ module BullsAndCows
     end
 
     def choose_to_play_input_validation(response)
-      if response == "y"
-        return
-      elsif response == "n"
+      if response == "1"
+        @human_play = true
+      elsif response == "2"
+        @human_play = false
+      elsif response == "3"
         quit_game
       else
         @ui.display_error "Input not valid, please choose y or n"
@@ -115,6 +122,7 @@ module BullsAndCows
 
     def quit_game
       @ui.quit_game
+      exit!
     end
 
     def choose_word
@@ -126,6 +134,7 @@ module BullsAndCows
         input.clear
         choose_word
       end
+      @ui.word_display(@secret_word)
     end
 
     def choose_word_input_validation(response)
@@ -146,10 +155,13 @@ module BullsAndCows
   end #End class Game
 
   class Compute
+    PEGS = 4
+
     def initialize(secret_word)
       @attempts = 0
       @secret_word = secret_word
       @ui = GameUI.new
+      @matrix = Matrix.new
     end
 
     def make_guess(possibilities)
@@ -161,33 +173,62 @@ module BullsAndCows
       guess[0] == 4
     end
 
-    def play
+    def iterate(check, possibilities, computer_guess)
+      #1.First try to reduce the possibilities the most
+      #1.1if no bulls or cows in the guess remove all combinations with the letters in the guess from the possibilities set
+      if check[1] == 0 && check[0] == 0
+        computer_guess.map{ |j| possibilities.delete_if{|x| x.include? j} }
+      end
+      #1.2there is a bull or cow in the guess, we should remove from the possibilities the combinations that does not have any of those words
+      n2 = Array.new
+      if check[1] > 0 || check[0] > 0
+        n2 = computer_guess.inject([]){|a,b| a += possibilities.select{|x| x.include? b } }
+        possibilities = n2.uniq
+      end
+      #2. Apply inspired Knuth algorithm
+      possibilities.select! do |s|
+        @matrix.compare(computer_guess,s) == check
+      end
+      possibilities
+    end
+
+    def human_play
+      possibilities = @matrix.permutations(PEGS)
+      @ui.display_msg "Total initial possibilities = " + possibilities.length.to_s
+
+      loop do
+        computer_guess = make_guess(possibilities)
+        @ui.display_msg "My guess no." + @attempts.to_s + " is: " + computer_guess.join.to_s
+        check = Array.new
+        @ui.display_msg "How many bulls I got?"
+        check[0] = gets.chomp.to_i
+        @ui.display_msg "How many cows I got?"
+        check[1] = gets.chomp.to_i
+
+        possibilities = iterate(check, possibilities, computer_guess)
+
+        if have_a_match?(check)
+          @ui.display_victory
+          break
+        elsif possibilities.length == 0
+          @ui.display_error "Something went wrong, gotta out of possibilities, check if your bulls and cows input was correct."
+          break
+        end
+      end
+    end # human_play
+
+    def computer_play
+      @ui.display_time("Started at: ")
       secret_word = @secret_word.scan /\w/
-      pegs = 4
-      matrix = Matrix.new
-      possibilities = matrix.permutations(pegs)
+      possibilities = @matrix.permutations(PEGS)
       @ui.display_msg "Total initial possibilities = " + possibilities.length.to_s
       @ui.display_board_header
 
       loop do
         computer_guess = make_guess(possibilities)
-        check = matrix.compare(secret_word, computer_guess)
+        check = @matrix.compare(secret_word, computer_guess)
 
-        #1.First try to reduce the possibilities the most
-        #1.1if no bulls or cows in the guess remove all combinations with the letters in the guess from the possibilities set
-        if check[1] == 0 && check[0] == 0
-          computer_guess.map{ |j| possibilities.delete_if{|x| x.include? j} }
-        end
-        #1.2there is a bull or cow in the guess, we should remove from the possibilities the combinations that does not have any of those words
-        n2 = Array.new
-        if check[1] > 0 || check[0] > 0
-          n2 = computer_guess.inject([]){|a,b| a += possibilities.select{|x| x.include? b } }
-          possibilities = n2.uniq
-        end
-        #2. Apply inspired Knuth algorithm
-        possibilities.select! do |s|
-          matrix.compare(computer_guess,s) == check
-        end
+        possibilities = iterate(check, possibilities, computer_guess)
 
         @ui.display_board_row(@attempts, computer_guess.join.to_s, check, possibilities.length.to_s)
 
@@ -196,7 +237,6 @@ module BullsAndCows
           @ui.display_victory
           break
         end
-
       end #end loop
     end #def play_game
   end # class Game
