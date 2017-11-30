@@ -123,7 +123,7 @@ module BullsAndCows
       elsif response == "3"
         quit_game
       else
-        @ui.display_error "Input not valid, please choose y or n"
+        @ui.display_error "Input not valid, please choose 1,2 or 3"
         choose_to_play
       end
     end
