@@ -31,15 +31,17 @@ module BullsAndCows
     end
     def instructions
       puts "Instructions:"
-      puts "Please choose a four-letter word with non repeating characters."
+      puts "Choose a four-letter word with non repeating characters."
+      puts "The computer then will try to guess the word."
       puts "Only letters are allowed!"
-      puts "The computer then will guess the word."
+      puts @colors.green("Bulls:") + " the number of correct letters in the right position."
+      puts @colors.green("Cows:") + " the number of correct letters in the wrong position."
       puts "\n"
     end
     def choose_display
       puts @colors.green("Please choose one option:")
-      puts @colors.green("1. Would you like to play yourself?")
-      puts @colors.green("2. Would you like the computer play for you?")
+      puts @colors.green("1. Would you like to input the bulls and cows yourself?")
+      puts @colors.green("2. Would you like the computer input the bulls and cows for you?")
       puts @colors.green("3. Would you like to quit?")
     end
     def word_display(msg)
@@ -180,7 +182,7 @@ module BullsAndCows
     def human_play
       possibilities = @matrix.permutations(PEGS)
 
-      @ui.display_msg "Think on you secret word, and press any key to start."
+      @ui.display_msg "Think on your secret word, and press any key to start."
       STDIN.getch
       print "            \r"
 
