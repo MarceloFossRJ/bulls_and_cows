@@ -86,19 +86,27 @@ module BullsAndCows
       cows = comparable.inject(0){|sum,e| (reference.include?(e)) ? sum += 1 : sum } - bulls
       Array.new([bulls,cows])
     end
+
+    def make_guess(possibilities)
+      possibilities.sample
+    end
   end
 
   class Game
+    PEGS = 4
+
     def initialize
       @ui = GameUI.new
+      @attempts = 0
+      @matrix = Matrix.new
+      @compute = Compute.new
+
       @ui.welcome
       @ui.instructions
       @ui.choose_display
       choose_to_play
       choose_word if !@human_play
-      compute = Compute.new(@secret_word)
-      #compute.play
-      @human_play ? compute.human_play : compute.computer_play
+      @human_play ? human_play : computer_play
       @ui.quit_game
     end
 
@@ -152,21 +160,74 @@ module BullsAndCows
       end
       return true
     end
-  end #End class Game
 
-  class Compute
-    PEGS = 4
-
-    def initialize(secret_word)
-      @attempts = 0
-      @secret_word = secret_word
-      @ui = GameUI.new
-      @matrix = Matrix.new
+    def validate_check_input(input)
+      if !((0..4) === input)
+        false
+      else
+        true
+      end
     end
 
     def make_guess(possibilities)
       @attempts += 1
-      possibilities.sample
+      @matrix.make_guess(possibilities)
+    end
+
+    def human_play
+      possibilities = @matrix.permutations(PEGS)
+      @ui.display_msg "Total initial possibilities = " + possibilities.length.to_s
+
+      loop do
+        computer_guess = make_guess(possibilities)
+        @ui.display_msg "My guess no." + @attempts.to_s + " is: " + computer_guess.join.to_s
+        check = Array.new
+        @ui.display_msg "How many bulls I got?"
+        check[0] = gets.chomp.to_i
+        @ui.display_msg "How many cows I got?"
+        check[1] = gets.chomp.to_i
+
+        possibilities = @compute.iterate(check, possibilities, computer_guess)
+
+        if @compute.have_a_match?(check)
+          @ui.display_victory
+          break
+        elsif possibilities.length == 0
+          @ui.display_error "Something went wrong, gotta out of possibilities, check if your bulls and cows input was correct."
+          break
+        end
+      end
+    end # human_play
+
+    def computer_play
+      @ui.display_time("Started at: ")
+      secret_word = @secret_word.scan /\w/
+      possibilities = @matrix.permutations(PEGS)
+      @ui.display_msg "Total initial possibilities = " + possibilities.length.to_s
+      @ui.display_board_header
+
+      loop do
+        computer_guess = make_guess(possibilities)
+        check = @matrix.compare(secret_word, computer_guess)
+
+        possibilities = @compute.iterate(check, possibilities, computer_guess)
+
+        @ui.display_board_row(@attempts, computer_guess.join.to_s, check, possibilities.length.to_s)
+
+        if @compute.have_a_match?(check)
+          @ui.display_board_bottom
+          @ui.display_victory
+          break
+        end
+      end #end loop
+    end #def computer_play
+  end #End class Game
+
+  class Compute
+    def initialize
+      @attempts = 0
+      @ui = GameUI.new
+      @matrix = Matrix.new
     end
 
     def have_a_match?(guess)
@@ -192,54 +253,7 @@ module BullsAndCows
       possibilities
     end
 
-    def human_play
-      possibilities = @matrix.permutations(PEGS)
-      @ui.display_msg "Total initial possibilities = " + possibilities.length.to_s
-
-      loop do
-        computer_guess = make_guess(possibilities)
-        @ui.display_msg "My guess no." + @attempts.to_s + " is: " + computer_guess.join.to_s
-        check = Array.new
-        @ui.display_msg "How many bulls I got?"
-        check[0] = gets.chomp.to_i
-        @ui.display_msg "How many cows I got?"
-        check[1] = gets.chomp.to_i
-
-        possibilities = iterate(check, possibilities, computer_guess)
-
-        if have_a_match?(check)
-          @ui.display_victory
-          break
-        elsif possibilities.length == 0
-          @ui.display_error "Something went wrong, gotta out of possibilities, check if your bulls and cows input was correct."
-          break
-        end
-      end
-    end # human_play
-
-    def computer_play
-      @ui.display_time("Started at: ")
-      secret_word = @secret_word.scan /\w/
-      possibilities = @matrix.permutations(PEGS)
-      @ui.display_msg "Total initial possibilities = " + possibilities.length.to_s
-      @ui.display_board_header
-
-      loop do
-        computer_guess = make_guess(possibilities)
-        check = @matrix.compare(secret_word, computer_guess)
-
-        possibilities = iterate(check, possibilities, computer_guess)
-
-        @ui.display_board_row(@attempts, computer_guess.join.to_s, check, possibilities.length.to_s)
-
-        if have_a_match?(check)
-          @ui.display_board_bottom
-          @ui.display_victory
-          break
-        end
-      end #end loop
-    end #def play_game
-  end # class Game
+  end # class Compute
 end #module BullsAndCows
 
 BullsAndCows::Game.new
