@@ -138,11 +138,11 @@ module BullsAndCows
       input = gets.chomp.downcase
       if choose_word_input_validation(input)
         @secret_word = input
+        @ui.word_display(@secret_word)
       else
         input.clear
         choose_word
       end
-      @ui.word_display(@secret_word)
     end
 
     def choose_word_input_validation(response)
@@ -163,10 +163,20 @@ module BullsAndCows
 
     def validate_check_input(input)
       if !((0..4) === input)
-        false
-      else
-        true
+        @ui.display_error "Invalid Input: Choose between 0 and 4"
+        return false
       end
+      return true
+    end
+
+    def input_bulls_and_cows
+      check = Array.new
+      @ui.display_msg "How many bulls I got?"
+      check[0] = gets.chomp.to_i
+
+      @ui.display_msg "How many cows I got?"
+      check[1] = gets.chomp.to_i
+      check
     end
 
     def make_guess(possibilities)
@@ -181,11 +191,8 @@ module BullsAndCows
       loop do
         computer_guess = make_guess(possibilities)
         @ui.display_msg "My guess no." + @attempts.to_s + " is: " + computer_guess.join.to_s
-        check = Array.new
-        @ui.display_msg "How many bulls I got?"
-        check[0] = gets.chomp.to_i
-        @ui.display_msg "How many cows I got?"
-        check[1] = gets.chomp.to_i
+
+        check = input_bulls_and_cows
 
         possibilities = @compute.iterate(check, possibilities, computer_guess)
 
