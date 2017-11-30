@@ -1,12 +1,7 @@
-# Coding Challenge
- 
-Write a command line program in ruby that accurately and efficiently guesses the word in 4 letter word Cows and Bulls game.
- 
-## Word Bulls and Cows 
+## Word Bulls and Cows
 
-Players: Two - Also known as: Word Mastermind
-
-Players take turns in trying to guess each other's word.
+Word Bulls and Cows is two player game also known as Word Mastermind.  
+The players take turns in trying to guess each other's word.
 
 ## Description
 
@@ -21,7 +16,7 @@ The Guesser tries to guess the answer in the fewest number of turns.
 The word to be guessed should not have repeating letters. Example, BOOK, TILT, KICK, BASS etc. are not allowed.
 
 ## Example
-For example, if the Chooser has thought of the word LOVE the replies for some guesses are as follows:
+If the Chooser has thought of the word LOVE the replies for some guesses are as follows:
 
 | Turn | My guess | Bulls | Cows |
 |:----:|:--------:| :----:|:----:|
@@ -31,5 +26,18 @@ For example, if the Chooser has thought of the word LOVE the replies for some gu
 | 4.   | VILE     | 1     | 2 |
 | 5.   | LOVE     | 4     | 0 |
 
-Essentially, your program is the "Guesser" in the description of the game above. Your algorithm guesses the word, while the Chooser (human) gives the cows and bulls score for each guess using command line.
- 
+
+In the current program, the computer is the "Guesser".  
+There are two gameplay options:  
+1. The game algorithm guesses the word, while the Chooser (human) gives the cows and bulls score for each guess using command line.
+2. the Chooser (human) selects a word and the game algorithm does the rest of the job automatically.
+
+## Installation instructions
+Clone the repository on your computer.  
+To run it type ``` $ ruby bac.rb ``` at command prompt, and follow the on screen instructions.
+
+## Implementation details
+The game was developed using ruby 2.3.1 on OSX El Capitan.  
+The second gameplay option was not the initial goal, but was developed first with the intent to validate the algorithm, in the end I decided to keep it if the user wants to see it running.
+
+Have fun!
